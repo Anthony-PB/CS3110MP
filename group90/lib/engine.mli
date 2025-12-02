@@ -26,14 +26,16 @@ val gravitational_force : Body.b -> by:Body.b -> Vec3.v
     @return Net force vector in Newtons. *)
 val net_force_on : Body.b -> w -> Vec3.v
 
-(** [step ~dt world] advances the simulation by one time step using numerical integration.
-    Uses Euler integration: for each body, computes net force, then acceleration (F=ma),
+(** [step ~dt world] advances the simulation by time [dt] using fixed timestep subdivision.
+    Uses Euler integration with automatic substeps: subdivides [dt] into multiple
+    small fixed timesteps (~60 FPS physics rate) for consistent behavior.
+    For each substep and body: computes net force, then acceleration (F=ma),
     updates velocity (v' = v + a*dt), and updates position (p' = p + v'*dt).
-    @param dt Time step in seconds (smaller values give more accurate results).
+    @param dt Total time to advance in seconds. Larger values speed up simulation.
     @param world The current state of all bodies.
     @return New world state after advancing by time [dt].
-    Note: This uses explicit Euler method which may accumulate energy errors over time.
-          For GUI: typical dt values range from 0.01 to 1000 depending on scale. *)
+    Note: This uses explicit Euler method with fixed internal timesteps.
+          Increasing [dt] speeds up simulation without affecting physics accuracy. *)
 val step : dt:float -> w -> w
 
 (** [check_collision b1 b2] checks if two bodies are colliding based on their positions and radii.

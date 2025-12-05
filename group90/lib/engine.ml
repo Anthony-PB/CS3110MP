@@ -25,8 +25,20 @@ let merge b1 b2 =
   let density = m /. v in
   let radius = (3. *. v /. (4. *. Float.pi)) ** (1. /. 3.) in
 
+  (* Blend colors based on mass ratio *)
+  let r1, g1, b1, a1 = Body.color b1 in
+  let r2, g2, b2, a2 = Body.color b2 in
+  let ratio1 = m1 /. m in
+  let ratio2 = m2 /. m in
+  let color = (
+    r1 *. ratio1 +. r2 *. ratio2,
+    g1 *. ratio1 +. g2 *. ratio2,
+    b1 *. ratio1 +. b2 *. ratio2,
+    a1 *. ratio1 +. a2 *. ratio2
+  ) in
+
   (*creating new merged body*)
-  Body.make ~density ~pos ~vel ~radius
+  Body.make ~density ~pos ~vel ~radius ~color
 
 let check_collision b1 b2 =
   let sum_of_radii = Body.radius b1 +. Body.radius b2 in

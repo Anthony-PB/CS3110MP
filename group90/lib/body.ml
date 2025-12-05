@@ -1,9 +1,4 @@
-type color = {
-  r : float;
-  g : float;
-  b : float;
-  a : float;
-}
+type color = float * float * float * float
 
 type b = {
   density : float ref;

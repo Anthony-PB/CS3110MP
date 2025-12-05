@@ -85,7 +85,7 @@ and handle_slider_input state =
 
 (** Handle keyboard input for simulation control *)
 and handle_keyboard_input state =
-  (* Check for scenario switching (1-6 keys) *)
+  (* Check for scenario switching (1-7 keys) *)
   let state_after_scenario =
     if is_key_pressed Key.One then load_scenario_by_index state 0
     else if is_key_pressed Key.Two then load_scenario_by_index state 1
@@ -93,6 +93,7 @@ and handle_keyboard_input state =
     else if is_key_pressed Key.Four then load_scenario_by_index state 3
     else if is_key_pressed Key.Five then load_scenario_by_index state 4
     else if is_key_pressed Key.Six then load_scenario_by_index state 5
+    else if is_key_pressed Key.Seven then load_scenario_by_index state 6
     else state
   in
 

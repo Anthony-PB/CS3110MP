@@ -13,10 +13,10 @@ let approx_vec ?(eps = 1e-6) v1 v2 =
   approx_equal ~eps (Vec3.y v1) (Vec3.y v2);
   approx_equal ~eps (Vec3.z v1) (Vec3.z v2)
 
-(* Updated helper to include radius *)
-let make_body ~pos ~vel ~mass ?(radius = 1.0) () =
+(* Updated helper to include radius and color *)
+let make_body ~pos ~vel ~mass ?(radius = 1.0) ?(color = (255., 255., 255., 255.)) () =
   let density = mass /. (4.0 /. 3.0 *. Float.pi *. (radius ** 3.0)) in
-  Body.make ~pos ~vel ~density ~radius
+  Body.make ~pos ~vel ~density ~radius ~color
 
 (* ---------- g ---------- *)
 

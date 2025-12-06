@@ -3,20 +3,29 @@ open Group90
 
 (* ---------- Helpers ---------- *)
 
+(** [vec x y z] is a 3D vector with components [x], [y], and [z]. *)
 let vec x y z = Vec3.make x y z
 
+(** [approx_equal ?eps a b] asserts that [a] and [b] are approximately equal
+    within epsilon [eps] (default 1e-6). *)
 let approx_equal ?(eps = 1e-6) a b =
   assert_bool (Printf.sprintf "Expected %f ≈ %f" a b) (Float.abs (a -. b) <= eps)
 
+(** [approx_vec ?eps v1 v2] asserts that vectors [v1] and [v2] are
+    approximately equal component-wise within epsilon [eps]. *)
 let approx_vec ?(eps = 1e-6) v1 v2 =
   approx_equal ~eps (Vec3.x v1) (Vec3.x v2);
   approx_equal ~eps (Vec3.y v1) (Vec3.y v2);
   approx_equal ~eps (Vec3.z v1) (Vec3.z v2)
 
-(* Updated helper to include radius *)
+(** [make_body ~pos ~vel ~mass ?radius ()] creates a test body with the given
+    position, velocity, mass, and optional radius (default 1.0). *)
 let make_body ~pos ~vel ~mass ?(radius = 1.0) () =
   let density = mass /. (4.0 /. 3.0 *. Float.pi *. (radius ** 3.0)) in
   Body.make ~pos ~vel ~density ~radius ~color:(255., 255., 255., 255.)
+
+(** [string_of_int i] converts integer [i] to a string for test output. *)
+let string_of_int = string_of_int
 
 (* ---------- g ---------- *)
 
@@ -148,7 +157,7 @@ let test_find_collisions_none _ =
     make_body ~pos:(vec 10. 0. 0.) ~vel:(vec 0. 0. 0.) ~mass:1. ~radius:1. ()
   in
   let collisions = Engine.find_collisions [ b1; b2 ] in
-  assert_equal 0 (List.length collisions)
+  assert_equal ~printer:string_of_int 0 (List.length collisions)
 
 let test_find_collisions_one_pair _ =
   let b1 =
@@ -161,7 +170,7 @@ let test_find_collisions_one_pair _ =
     make_body ~pos:(vec 100. 0. 0.) ~vel:(vec 0. 0. 0.) ~mass:1. ~radius:1. ()
   in
   let collisions = Engine.find_collisions [ b1; b2; b3 ] in
-  assert_equal 1 (List.length collisions)
+  assert_equal ~printer:string_of_int 1 (List.length collisions)
 
   (* ---------- Scenario Tests ---------- *)
 
@@ -183,7 +192,7 @@ let test_scenario_get_by_name_unknown_uses_default _ =
 
 let test_scenario_collision_course_two_bodies _ =
   let s = Scenario.get_scenario_by_name "Collision Course" in
-  assert_equal 2 (List.length s.Scenario.bodies)
+  assert_equal ~printer:string_of_int 2 (List.length s.Scenario.bodies)
 
   (* ---------- Simulation_state Tests ---------- *)
 
@@ -194,7 +203,7 @@ let test_state_initial_defaults _ =
   assert_equal
     ~printer:(fun s -> s)
     "Three-Body Problem" st.current_scenario;
-  assert_equal 0 (Simulation_state.num_bodies st);
+  assert_equal ~printer:string_of_int 0 (Simulation_state.num_bodies st);
   assert_bool "no pending changes initially"
     (not (Simulation_state.has_pending_changes st))
 
@@ -223,16 +232,18 @@ let test_state_apply_params_clears_pending _ =
   assert_bool "no pending after apply"
     (not (Simulation_state.has_pending_changes st2));
   (* applied_params should match pending_params *)
-  assert_equal st2.pending_params st2.applied_params
+  assert_equal
+    ~printer:(fun _ -> "params list")
+    st2.pending_params st2.applied_params
 
 let test_state_cycle_selected_planet_wraps _ =
   let st0 = Simulation_state.create_initial () in
-  assert_equal 0 st0.selected_planet;
+  assert_equal ~printer:string_of_int 0 st0.selected_planet;
   let st1 = Simulation_state.cycle_selected_planet st0 (-1) in
   (* (0 - 1 + 3) mod 3 = 2 *)
-  assert_equal 2 st1.selected_planet;
+  assert_equal ~printer:string_of_int 2 st1.selected_planet;
   let st2 = Simulation_state.cycle_selected_planet st1 1 in
-  assert_equal 0 st2.selected_planet
+  assert_equal ~printer:string_of_int 0 st2.selected_planet
 
 let test_state_trail_render_info_active_and_orphaned _ =
   let p1 = vec 0. 0. 0. in
@@ -240,7 +251,7 @@ let test_state_trail_render_info_active_and_orphaned _ =
   let positions_a, alpha_a =
     Simulation_state.get_trail_render_info active 10.0
   in
-  assert_equal 1 (List.length positions_a);
+  assert_equal ~printer:string_of_int 1 (List.length positions_a);
   approx_equal 1.0 alpha_a;
   let orphaned =
     Simulation_state.Orphaned { positions = [ p1 ]; orphaned_at = 0.0 }
@@ -271,7 +282,7 @@ let test_physics_update_small_time_scale_single_step _ =
   match (world1, world2) with
   | [ b1 ], [ b2 ] ->
       approx_vec (Body.pos b1) (Body.pos b2);
-      assert_equal
+      assert_equal ~printer:string_of_int
         (List.length collisions2)
         (List.length collisions1)
   | _ -> assert_failure "Expected single-body worlds"
@@ -310,7 +321,7 @@ let test_physics_update_trails_adds_and_limits_length _ =
   in
   (match trails with
   | [ t ] ->
-      assert_equal 2 (List.length t);
+      assert_equal ~printer:string_of_int 2 (List.length t);
       approx_vec (List.hd t) (Body.pos body)
   | _ -> assert_failure "Expected one trail");
 
@@ -322,7 +333,7 @@ let test_physics_update_trails_adds_and_limits_length _ =
     Physics_system.update_trails [ long_trail ] world []
   in
   match trails2 with
-  | [ t ] -> assert_equal 100 (List.length t)
+  | [ t ] -> assert_equal ~printer:string_of_int 100 (List.length t)
   | _ -> assert_failure "Expected one trail"
 
 let test_physics_is_colliding_wrapper _ =
@@ -384,8 +395,8 @@ let test_engine_step_with_collisions_merges_bodies _ =
   let world = [b1; b2; b3] in
   let new_world, collisions = Engine.step_with_collisions ~dt:0.01 world in
   (* b1 and b2 should merge into one body, plus b3 = 2 bodies *)
-  assert_equal 2 (List.length new_world);
-  assert_equal 1 (List.length collisions)
+  assert_equal ~printer:string_of_int 2 (List.length new_world);
+  assert_equal ~printer:string_of_int 1 (List.length collisions)
 
 let test_engine_step_with_collisions_no_collision _ =
   (* Distant bodies should not merge *)
@@ -393,8 +404,8 @@ let test_engine_step_with_collisions_no_collision _ =
   let b2 = make_body ~pos:(vec 100. 0. 0.) ~vel:(vec 0. 0. 0.) ~mass:1. ~radius:1. () in
   let world = [b1; b2] in
   let new_world, collisions = Engine.step_with_collisions ~dt:0.01 world in
-  assert_equal 2 (List.length new_world);
-  assert_equal 0 (List.length collisions)
+  assert_equal ~printer:string_of_int 2 (List.length new_world);
+  assert_equal ~printer:string_of_int 0 (List.length collisions)
 
 (* ---------- More Simulation_state Tests ---------- *)
 
@@ -402,14 +413,14 @@ let test_state_set_world _ =
   let st = Simulation_state.create_initial () in
   let b = make_body ~pos:(vec 0. 0. 0.) ~vel:(vec 0. 0. 0.) ~mass:1. () in
   let st2 = Simulation_state.set_world st [b] in
-  assert_equal 1 (Simulation_state.num_bodies st2)
+  assert_equal ~printer:string_of_int 1 (Simulation_state.num_bodies st2)
 
 let test_state_load_scenario _ =
   let st = Simulation_state.create_initial () in
   let st2 = Simulation_state.load_scenario st "Binary Star" in
   assert_equal ~printer:(fun s -> s) "Binary Star" st2.current_scenario;
-  assert_equal 0 (List.length st2.trails);
-  assert_equal 0 (List.length st2.collision_anims)
+  assert_equal ~printer:string_of_int 0 (List.length st2.trails);
+  assert_equal ~printer:string_of_int 0 (List.length st2.collision_anims)
 
 let test_state_reset_to_defaults _ =
   let st = Simulation_state.create_initial () in
@@ -423,7 +434,7 @@ let test_state_set_sidebar_and_selected _ =
   let st2 = Simulation_state.set_sidebar_visible st false in
   assert_bool "sidebar should be hidden" (not st2.sidebar_visible);
   let st3 = Simulation_state.set_selected_planet st2 2 in
-  assert_equal 2 st3.selected_planet
+  assert_equal ~printer:string_of_int 2 st3.selected_planet
 
 let test_state_collision_anims _ =
   let st = Simulation_state.create_initial () in
@@ -432,10 +443,10 @@ let test_state_collision_anims _ =
   let collision_pairs = [(b1, b2)] in
   let colors = [(255, 255, 255, 255); (200, 200, 200, 255)] in
   let st2 = Simulation_state.add_collision_animations st collision_pairs colors 0.0 in
-  assert_equal 1 (List.length st2.collision_anims);
+  assert_equal ~printer:string_of_int 1 (List.length st2.collision_anims);
   let st3 = Simulation_state.prune_expired_animations st2 10.0 in
   (* Should be expired after 10 seconds *)
-  assert_equal 0 (List.length st3.collision_anims)
+  assert_equal ~printer:string_of_int 0 (List.length st3.collision_anims)
 
 let test_state_trails_fading _ =
   let st = Simulation_state.create_initial () in

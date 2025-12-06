@@ -1,2 +1,4 @@
 (library
- (name group90))
+ (name group90)
+ (instrumentation
+  (backend bisect_ppx)))
